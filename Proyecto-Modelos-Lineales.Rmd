@@ -1,8 +1,38 @@
 ---
 title: "Proyecto"
-author: "Carlos Gila Blanco y Enrique Sayas Bailach"
-date: "2/4/2023"
-output: html_document
+author: Carlos Gila Blanco y Enrique Sayas Bailach
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: '3'
+    df_print: paged
+  html_notebook:
+    echo: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+params:
+  lang: ES
+lang: r switch(params$lang, ES = 'es-ES', EN = 'en-US')
+subtitle: Tratamiento de Datos. Grado en Ciencia de Datos- UV
+language:
+  label:
+    fig: 'Figura '
+    tab: 'Tabla '
+    eq: 'Ecuación '
+    thm: 'Teorema '
+    lem: 'Lema '
+    def: 'Definición '
+    cor: 'Corolario '
+    prp: 'Proposición '
+    exm: 'Ejemplo '
+    exr: 'Ejercicio '
+    proof: 'Demostración. '
+    remark: 'Nota: '
+    solution: 'Solución. '
 ---
 
 ```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
@@ -50,13 +80,17 @@ search()
 rm(list = ls())
 ```
 
-# Análisis Exploratorio
+# Introducción al trabajo
 
-## Carga de los datos
+# Carga de los datos
 
 ```{r}
 df <- read_csv("data/df.csv", col_types = cols(...1 = col_skip(), 
     year = col_number()))
+
+summary(df)
+
+cor(df %>% select(5:11) %>% drop_na()) 
 ```
 
 
