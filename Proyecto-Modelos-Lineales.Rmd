@@ -1,0 +1,64 @@
+---
+title: "Proyecto"
+author: "Carlos Gila Blanco y Enrique Sayas Bailach"
+date: "2/4/2023"
+output: html_document
+---
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+# Configuración del los bloques (*Chunks*)
+
+# CONFIGURACIÓN GENERAL
+library(knitr)
+options(width = 100)
+
+# Opciones generales de los chucks. Se utilizarán salvo cambios en el chunk
+opts_chunk$set(echo=T, message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 200, tidy = F, cache.path = '.cache/', fig.path = './figura/')
+
+# Opciones generales de dígitos cuando se incluyen tablas
+#options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+#knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+```{r echo = F, message = F}
+# Instalación automática de paquetes
+
+# Especificamos las librerías necesarias en esta lista
+
+packages = c("readr","ggplot2","dplyr","tidyr","stringr","lubridate")
+
+#use this function to check if each package is on the local machine
+#if a package is installed, it will be loaded
+#if any are not, the missing package(s) will be installed and loaded
+package.check <- lapply(packages, FUN = function(x) {
+  if (!require(x, character.only = TRUE)) {
+    install.packages(x, dependencies = TRUE,repos='http://cran.rediris.es')
+  }
+  library(x, character.only = TRUE)
+})
+
+#verify they are loaded
+search()
+rm(list = ls())
+```
+
+# Análisis Exploratorio
+
+## Carga de los datos
+
+```{r}
+df <- read_csv("data/df.csv", col_types = cols(...1 = col_skip(), 
+    year = col_number()))
+```
+
+
+
+
