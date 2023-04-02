@@ -63,7 +63,7 @@ knit_hooks$set(inline = function(x) {
 
 # Especificamos las librerías necesarias en esta lista
 
-packages = c("readr","ggplot2","dplyr","tidyr","stringr","lubridate")
+packages = c("readr","ggplot2","dplyr","tidyr","stringr","GGally","car")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -89,9 +89,50 @@ df <- read_csv("data/df.csv", col_types = cols(...1 = col_skip(),
     year = col_number()))
 
 summary(df)
-
-cor(df %>% select(5:11) %>% drop_na()) 
 ```
+
+# Tansformación a tidy dataset
+
+```{r}
+df_tidy <- df %>% pivot_longer(c(renewable, no_renewable), names_to = "type", values_to = "prop")
+```
+
+## Categoría de las variables
+
+Vamos a cambiar el tipo de variables de `name`, `alpha-3`, `region` y `sub-region`. Todas ellas serán de tipo factor, con tantos niveles como valores diferentes hayan.
+
+```{r}
+df_tidy$name <- as.factor(df_tidy$name)
+df_tidy$`alpha-3` <- as.factor(df_tidy$`alpha-3`)
+df_tidy$region <- as.factor(df_tidy$region)
+df_tidy$`sub-region` <- as.factor(df_tidy$`sub-region`)
+df_tidy$type <- as.factor(df_tidy$type)
+```
+
+# Análisis Exploratorio
+
+## Análisis Univariante
+
+```{r}
+qqPlot(df$CO2)
+qqPlot(df$GDP)
+qqPlot(df$Population)
+```
+
+
+## Análisis Bivariante
+
+```{r}
+df %>% select(year:Population) %>% ggpairs()
+
+df %>% select(year:Population) %>% ggcorr()
+
+df %>% select(year:Population) %>% pairs()
+```
+
+
+
+
 
 
 
