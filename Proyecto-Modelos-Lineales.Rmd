@@ -89,6 +89,8 @@ df <- read_csv("data/df.csv", col_types = cols(...1 = col_skip(),
     year = col_number()))
 
 summary(df)
+
+df$name[df$`alpha-3` == "CIV"] = "Cote D'Ivoire"
 ```
 
 # Tansformación a tidy dataset
@@ -129,6 +131,116 @@ df %>% select(year:Population) %>% ggcorr()
 
 df %>% select(year:Population) %>% pairs()
 ```
+
+```{r}
+# Explorar la variable "CO2"
+ggplot(df, aes(x=year, y=CO2, color=name)) + 
+  geom_line() + 
+  theme_bw() +
+  labs(title = "Emisiones de CO2 por país y año", 
+       x = "Año", 
+       y = "Emisiones de CO2") +
+  theme(legend.position='none')
+
+# Explorar la variable "GDP"
+ggplot(df, aes(x=year, y=GDP, color=name)) + 
+  geom_line() + 
+  theme_bw() +
+  labs(title = "PIB por país y año", 
+       x = "Año", 
+       y = "PIB") +
+  theme(legend.position='none')
+
+# Explorar la relación entre "CO2" y "GDP"
+ggplot(df, aes(x=GDP, y=CO2, color=name)) + 
+  geom_point() + 
+  theme_bw() +
+  labs(title = "Relación entre emisiones de CO2 y PIB por país", 
+       x = "PIB", 
+       y = "Emisiones de CO2") +
+  theme(legend.position='none')
+
+```
+
+```{r}
+# Explorar la relación entre "CO2" y "Population"
+ggplot(df, aes(x=Population, y=CO2, color=name)) + 
+  geom_point() + 
+  theme_bw() +
+  labs(title = "Relación entre emisiones de CO2 y población por país", 
+       x = "Población", 
+       y = "Emisiones de CO2") +
+  theme(legend.position='none')
+
+# Explorar la distribución de las emisiones de CO2 por año y continente
+ggplot(df, aes(x=CO2, fill=region)) + 
+  geom_histogram(bins = 70) + 
+  facet_wrap(~year) +
+  theme_bw() +
+  labs(title = "Distribución de emisiones de CO2 por continente y año", 
+       x = "Emisiones de CO2", 
+       y = "Frecuencia")
+
+# Explorar la evolución del consumo de electricidad por país y año
+ggplot(df, aes(x=year, y=total_electricity, color=name)) + 
+  geom_line() + 
+  theme_bw() +
+  labs(title = "Consumo de electricidad por país y año", 
+       x = "Año", 
+       y = "Consumo de electricidad") +
+  theme(legend.position='none') +
+  xlim(2000,2019)
+
+# Explorar la distribución del PIB por subregión
+ggplot(df, aes(x=GDP, fill= `sub-region`)) + 
+  geom_histogram(bins = 90) + 
+  theme_bw() +
+  labs(title = "Distribución del PIB por subregión", 
+       x = "PIB", 
+       y = "Frecuencia") +
+  xlim(0, 1.5*10^13) +
+  ylim(0, 1000)
+```
+
+```{r}
+# Gráfico de barras con etiquetas de texto para mostrar los países con mayor emisión de CO2 en 2019
+df %>%
+  filter(year == 2019) %>%
+  arrange(desc(CO2)) %>%
+  head(10) %>%
+  ggplot(aes(x=name, y=CO2)) +
+  geom_bar(stat="identity", fill="#9ecae1") +
+  geom_text(aes(label=floor(CO2))) +
+  coord_flip() +
+  theme_bw() +
+  labs(title = "Países con mayor emisión de CO2 en 2019", 
+       x = "", 
+       y = "Emisiones de CO2")
+
+# Gráfico de burbujas que muestra la relación entre emisiones de CO2 y PIB per cápita
+df %>%
+  filter(year == 2019 & !is.na(GDP/Population)) %>%
+  ggplot(aes(x=GDP/Population, y=CO2, size=Population, color=region)) +
+  geom_point(alpha=0.7) +
+  scale_size(range=c(1,10)) +
+  theme_bw() +
+  labs(title = "Relación entre emisiones de CO2 y PIB per cápita", 
+       x = "PIB per cápita", 
+       y = "Emisiones de CO2")
+
+# Gráfico de área para mostrar la evolución de las emisiones de CO2 por región
+df %>%
+  group_by(region, year) %>%
+  summarize(total_CO2 = sum(CO2)) %>%
+  ggplot(aes(x=year, y=total_CO2, fill=region)) +
+  geom_area() +
+  theme_bw() +
+  labs(title = "Evolución de las emisiones de CO2 por región", 
+       x = "Año", 
+       y = "Emisiones de CO2")
+```
+
+
 
 
 
