@@ -137,6 +137,8 @@ CNT_FAM_MEMBERS: Tamaño de la familia.
 
 ### credit_record
 
+Registro de pagos/impagos de un cliente determinado.
+
 ID: Identificador del cliente.
 
 MONTHS_BALANCE: Registro por mes.
@@ -158,3 +160,9 @@ X: No hay créditos para ese mes.
 application_record <- read_csv("data/application_record.csv")
 credit_record <- read_csv("data/credit_record.csv")
 ```
+
+```{r}
+summary(application_record)
+summary(credit_record)
+```
+
