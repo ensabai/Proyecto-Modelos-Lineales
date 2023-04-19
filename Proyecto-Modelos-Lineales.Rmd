@@ -82,4 +82,21 @@ rm(list = ls())
 
 # Introducción al trabajo
 
+## Carga del banco de datos
+
+```{r}
+music_genre <- read_csv("data/music_genre.csv")
+summary(music_genre)
+```
+
+## Adecuación tipo de datos
+
+```{r}
+music_genre$key <- as.factor(music_genre$key)
+music_genre$mode <- as.factor(music_genre$mode)
+music_genre$tempo[music_genre$tempo == "?"] = NA
+music_genre$tempo <- as.numeric(music_genre$tempo)
+summary(music_genre)
+```
+
 
