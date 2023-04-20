@@ -92,11 +92,31 @@ summary(music_genre)
 ## Adecuación tipo de datos
 
 ```{r}
+music_genre$instance_id <- as.character(music_genre$instance_id)
 music_genre$key <- as.factor(music_genre$key)
 music_genre$mode <- as.factor(music_genre$mode)
 music_genre$tempo[music_genre$tempo == "?"] = NA
 music_genre$tempo <- as.numeric(music_genre$tempo)
+music_genre$loudness <- music_genre$loudness - min(music_genre$loudness, na.rm = TRUE)
+music_genre$music_genre <- as.factor(music_genre$music_genre)
 summary(music_genre)
 ```
+
+## Ejemplo gráfico
+
+```{r}
+music_genre1 <- music_genre %>% select(-c(key,mode,obtained_date))
+music_genre1 <- music_genre1 %>% mutate(popularity_por = popularity / 100,
+                        duration_por = duration_ms / max(duration_ms, na.rm = TRUE),
+                        tempo_por = tempo / max(tempo, na.rm = TRUE),
+                        loudness_por = loudness / max(loudness, na.rm = TRUE)
+                        )
+
+music_genre1 %>% filter(instance_id %in% c(49721, 66116, 20548)) %>% 
+  pivot_longer(-c(instance_id,artist_name,track_name,popularity,duration_ms,music_genre,tempo,loudness),names_to = "categorias", values_to = "valores") %>% 
+  ggplot(aes(x = categorias, y = valores, group = instance_id, fill = instance_id)) +
+  geom_col(color = "black") + coord_polar() + scale_fill_hue(labels = reorder(music_genre1$track_name,music_genre1$instance_id))
+```
+
 
 
