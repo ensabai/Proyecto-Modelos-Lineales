@@ -92,6 +92,7 @@ summary(music_genre)
 ## Adecuación tipo de datos
 
 ```{r}
+music_genre <- music_genre %>% filter(!is.na(popularity))
 music_genre$instance_id <- as.character(music_genre$instance_id)
 music_genre$key <- as.factor(music_genre$key)
 music_genre$mode <- as.factor(music_genre$mode)
@@ -100,6 +101,7 @@ music_genre$tempo <- as.numeric(music_genre$tempo)
 music_genre$loudness <- music_genre$loudness - min(music_genre$loudness, na.rm = TRUE)
 music_genre$music_genre <- as.factor(music_genre$music_genre)
 summary(music_genre)
+table(music_genre$music_genre)
 ```
 
 ## Ejemplo gráfico
