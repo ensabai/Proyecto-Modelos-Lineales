@@ -63,7 +63,7 @@ knit_hooks$set(inline = function(x) {
 
 # Especificamos las librerías necesarias en esta lista
 
-packages = c("readr","ggplot2","dplyr","tidyr","stringr","GGally","car")
+packages = c("readr","ggplot2","dplyr","tidyr","stringr","GGally","car","MASS","class","nnet")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -96,6 +96,7 @@ music_genre <- music_genre %>% filter(!is.na(popularity))
 music_genre$instance_id <- as.character(music_genre$instance_id)
 music_genre$key <- as.factor(music_genre$key)
 music_genre$mode <- as.factor(music_genre$mode)
+music_genre$duration_ms[music_genre$duration_ms == -1] = NA
 music_genre$tempo[music_genre$tempo == "?"] = NA
 music_genre$tempo <- as.numeric(music_genre$tempo)
 music_genre$loudness <- music_genre$loudness - min(music_genre$loudness, na.rm = TRUE)
@@ -104,17 +105,132 @@ summary(music_genre)
 table(music_genre$music_genre)
 ```
 
+# Modelos de Predicción
+
+## Creación de los subconjuntos de entrenamiento y test
+
+```{r}
+music_genre_pred <- music_genre %>% dplyr::select(-c(key,mode,obtained_date,tempo,duration_ms,instance_id,track_name,artist_name))
+```
+
+```{r}
+set.seed(123)
+n <- nrow(music_genre_pred)
+train <- rep(TRUE,n)
+train[sample(n,n*0.2)] <- FALSE
+
+held.out <- music_genre_pred[!train, ]
+held.out.music_genre <- music_genre_pred$music_genre[!train]
+```
+
+## Análisis Lineal Discriminante (LDA)
+
+### Entrenamiento
+
+```{r}
+lda.1 <- lda(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train) 
+lda.1
+```
+
+### Test
+
+```{r}
+lda.pred <- predict(lda.1, held.out)
+
+lda.class <- lda.pred$class
+table(held.out.music_genre,lda.class)
+
+mean(lda.class == held.out.music_genre)
+```
+
+## Análisis discriminante cuadrático (QDA)
+
+### Entrenamiento
+
+```{r}
+qda.1 <- qda(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train)
+qda.1
+```
+
+### Test
+
+```{r}
+qda.pred <- predict(qda.1, held.out)
+
+qda.class <- qda.pred$class
+
+table(held.out.music_genre,qda.class)
+
+mean(qda.class == held.out.music_genre)
+```
+
+## K vecinos más cercanos (KNN)
+
+### Subconjuntos de Entrenamiento y Test
+
+```{r}
+train.var <- cbind(music_genre_pred[1:9])[train,]
+held.out.var <- cbind(music_genre_pred[1:9])[!train,]
+train.music_genre <- music_genre_pred$music_genre[train]
+```
+
+```{r}
+set.seed(123)
+knn.1 <- knn(train.var, held.out.var, train.music_genre, k = 250)
+(tt <- table(held.out.music_genre, knn.1))
+aciertos <- 0
+for (i in 1:9){
+  aciertos <- aciertos + tt[i,i]
+}
+aciertos / sum(tt)
+```
+
+## Regresión multinomial
+
+### Entrenamiento
+
+```{r}
+test <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train)
+
+summary(test)
+
+z <- summary(test)$coefficients/summary(test)$standard.errors
+# Test de Wald para los coeficientes
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+p # los p-values para cada coeficiente
+
+step(test, trace=0)
+```
+
+### Entrenamiento
+
+```{r}
+m.1 <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train)
+m.1
+```
+
+### Predicción
+
+```{r}
+p.1 <- predict(m.1,held.out)
+
+table(held.out.music_genre,p.1)
+
+mean(p.1 == held.out.music_genre)
+```
+
+
 ## Ejemplo gráfico
 
 ```{r}
-music_genre1 <- music_genre %>% select(-c(key,mode,obtained_date))
-music_genre1 <- music_genre1 %>% mutate(popularity_por = popularity / 100,
+music_genre_prop <- music_genre %>% select(-c(key,mode,obtained_date))
+music_genre_prop <- music_genre_prop %>% mutate(popularity_por = popularity / 100,
                         duration_por = duration_ms / max(duration_ms, na.rm = TRUE),
                         tempo_por = tempo / max(tempo, na.rm = TRUE),
                         loudness_por = loudness / max(loudness, na.rm = TRUE)
                         )
 
-music_genre1 %>% filter(instance_id %in% c(49721, 66116, 20548)) %>% 
+music_genre_prop %>% filter(instance_id %in% c(49721, 66116, 20548)) %>% 
   pivot_longer(-c(instance_id,artist_name,track_name,popularity,duration_ms,music_genre,tempo,loudness),names_to = "categorias", values_to = "valores") %>% 
   ggplot(aes(x = categorias, y = valores, group = instance_id, fill = instance_id)) +
   geom_col(color = "black") + coord_polar() + theme_minimal() +
@@ -124,14 +240,14 @@ music_genre1 %>% filter(instance_id %in% c(49721, 66116, 20548)) %>%
 ```
 
 ```{r}
-music_genre2 <- music_genre1 %>% group_by(music_genre) %>% 
-  summarise(acousticness  = mean(acousticness), danceability = mean(danceability), energy = mean(energy), instrumentalness = mean(instrumentalness), liveness = mean(liveness), speechiness = mean(speechiness), valence = mean(valence), popularity = mean(popularity_por), duration = mean(duration_por), tempo = mean(tempo_por, na.rm = TRUE), loudness = mean(loudness_por))
+music_per_genre_prop <- music_genre_prop %>% group_by(music_genre) %>% 
+  summarise(acousticness  = mean(acousticness), danceability = mean(danceability), energy = mean(energy), instrumentalness = mean(instrumentalness), liveness = mean(liveness), speechiness = mean(speechiness), valence = mean(valence), popularity = mean(popularity_por), duration = mean(duration_por, na.rm = TRUE), tempo = mean(tempo_por, na.rm = TRUE), loudness = mean(loudness_por))
 
 generos <- c("Alternative","Anime","Blues","Classical","Country","Electronic","Hip-Hop","Jazz","Rap","Rock")
 
 valores <- c("#006633", "#FFC0CB", "#000080", "#000000", "#D2B48C", "#00FFFF", "#FF0000", "#ADD8E6", "#808080", "#8B0000")
 
-music_genre2 %>% filter(music_genre %in% c("Anime","Rock","Blues")) %>% 
+music_per_genre_prop %>% filter(music_genre %in% c("Anime","Rock","Blues")) %>% 
   pivot_longer(-c(music_genre),names_to = "categorias", values_to = "valores") %>% 
   ggplot(aes(x = categorias, y = valores, group = music_genre, fill = music_genre)) +
   geom_col(color = "black") + 
