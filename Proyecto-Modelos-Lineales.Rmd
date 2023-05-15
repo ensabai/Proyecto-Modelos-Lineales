@@ -63,7 +63,7 @@ knit_hooks$set(inline = function(x) {
 
 # Especificamos las librerías necesarias en esta lista
 
-packages = c("readr","ggplot2","dplyr","tidyr","stringr","GGally","car","MASS","class","nnet")
+packages = c("readr","ggplot2","dplyr","tidyr","stringr","GGally","car","MASS","class","nnet","pROC")
 
 #use this function to check if each package is on the local machine
 #if a package is installed, it will be loaded
@@ -143,6 +143,17 @@ table(held.out.music_genre,lda.class)
 mean(lda.class == held.out.music_genre)
 ```
 
+#### Curva ROC
+
+```{r}
+predictions <- predict(lda.1,newdata = held.out, type = "prob")[["posterior"]]
+roc.multi <- multiclass.roc(held.out.music_genre, predictions)
+auc(roc.multi)
+rs <- roc.multi[["rocs"]]
+plot.roc(rs[[1]][[1]])
+sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
+```
+
 ## Análisis discriminante cuadrático (QDA)
 
 ### Entrenamiento
@@ -162,6 +173,17 @@ qda.class <- qda.pred$class
 table(held.out.music_genre,qda.class)
 
 mean(qda.class == held.out.music_genre)
+```
+
+#### Curva ROC
+
+```{r}
+predictions <- predict(qda.1,newdata = held.out, type = "prob")[["posterior"]]
+roc.multi <- multiclass.roc(held.out.music_genre, predictions)
+auc(roc.multi)
+rs <- roc.multi[["rocs"]]
+plot.roc(rs[[1]][[1]])
+sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
 ```
 
 ## K vecinos más cercanos (KNN)
@@ -219,18 +241,28 @@ table(held.out.music_genre,p.1)
 mean(p.1 == held.out.music_genre)
 ```
 
+#### Curva ROC
+
+```{r}
+predictions <- predict(m.1,newdata = held.out, type = "prob")
+roc.multi <- multiclass.roc(held.out.music_genre, predictions)
+auc(roc.multi)
+rs <- roc.multi[["rocs"]]
+plot.roc(rs[[1]][[1]])
+sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
+```
 
 ## Ejemplo gráfico
 
 ```{r}
-music_genre_prop <- music_genre %>% select(-c(key,mode,obtained_date))
-music_genre_prop <- music_genre_prop %>% mutate(popularity_por = popularity / 100,
+music_genre_prop <- music_genre %>% dplyr::select(-c(key,mode,obtained_date))
+music_genre_prop <- music_genre_prop %>% dplyr::mutate(popularity_por = popularity / 100,
                         duration_por = duration_ms / max(duration_ms, na.rm = TRUE),
                         tempo_por = tempo / max(tempo, na.rm = TRUE),
                         loudness_por = loudness / max(loudness, na.rm = TRUE)
                         )
 
-music_genre_prop %>% filter(instance_id %in% c(49721, 66116, 20548)) %>% 
+music_genre_prop %>% dplyr::filter(instance_id %in% c(49721, 66116, 20548)) %>% 
   pivot_longer(-c(instance_id,artist_name,track_name,popularity,duration_ms,music_genre,tempo,loudness),names_to = "categorias", values_to = "valores") %>% 
   ggplot(aes(x = categorias, y = valores, group = instance_id, fill = instance_id)) +
   geom_col(color = "black") + coord_polar() + theme_minimal() +
@@ -247,7 +279,7 @@ generos <- c("Alternative","Anime","Blues","Classical","Country","Electronic","H
 
 valores <- c("#006633", "#FFC0CB", "#000080", "#000000", "#D2B48C", "#00FFFF", "#FF0000", "#ADD8E6", "#808080", "#8B0000")
 
-music_per_genre_prop %>% filter(music_genre %in% c("Anime","Rock","Blues")) %>% 
+music_per_genre_prop %>% dplyr::filter(music_genre %in% c("Anime","Rock","Blues")) %>% 
   pivot_longer(-c(music_genre),names_to = "categorias", values_to = "valores") %>% 
   ggplot(aes(x = categorias, y = valores, group = music_genre, fill = music_genre)) +
   geom_col(color = "black") + 
