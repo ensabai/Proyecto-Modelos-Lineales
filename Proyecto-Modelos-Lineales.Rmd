@@ -138,9 +138,33 @@ lda.1
 lda.pred <- predict(lda.1, held.out)
 
 lda.class <- lda.pred$class
-table(held.out.music_genre,lda.class)
+(tabla.lda <- table(held.out.music_genre,lda.class))
 
 mean(lda.class == held.out.music_genre)
+```
+
+#### Mapa de Calor Predicciones
+
+```{r}
+tabla.lda2 <- table(held.out.music_genre,lda.class)
+for (i in 1:nrow(tabla.lda)){
+  for (j in 1:nrow(tabla.lda)){
+    tabla.lda2[i,j] <- tabla.lda[i,j] / sum(tabla.lda[i,])
+  }
+}
+orden <- c("Rock","Rap","Jazz","Hip-Hop","Electronic","Country","Classical","Blues","Anime","Alternative")
+datalda2 <- as.data.frame(tabla.lda2)
+datalda2 %>% ggplot(aes(x = lda.class, y = held.out.music_genre, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(x = lda.class, y = held.out.music_genre, label = round(Freq,2))) +
+  scale_fill_gradient(low = "white", high = "red") +
+  scale_y_discrete(limits = orden) +
+  labs(title = "LDA",
+       x = "Predicciones",
+       y = "Valores reales",
+       fill = "Porcentaje") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 20))
 ```
 
 #### Curva ROC
@@ -170,9 +194,33 @@ qda.pred <- predict(qda.1, held.out)
 
 qda.class <- qda.pred$class
 
-table(held.out.music_genre,qda.class)
+(tabla.qda <- table(held.out.music_genre,qda.class))
 
 mean(qda.class == held.out.music_genre)
+```
+
+#### Mapa de Calor Predicciones
+
+```{r}
+tabla.qda2 <- table(held.out.music_genre,qda.class)
+for (i in 1:nrow(tabla.qda)){
+  for (j in 1:nrow(tabla.qda)){
+    tabla.qda2[i,j] <- tabla.qda[i,j] / sum(tabla.qda[i,])
+  }
+}
+
+dataqda2 <- as.data.frame(tabla.qda2)
+dataqda2 %>% ggplot(aes(x = qda.class, y = held.out.music_genre, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(x = qda.class, y = held.out.music_genre, label = round(Freq,2))) +
+  scale_fill_gradient(low = "white", high = "red") +
+  scale_y_discrete(limits = orden) +
+  labs(title = "QDA",
+       x = "Predicciones",
+       y = "Valores reales",
+       fill = "Porcentaje") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 20))
 ```
 
 #### Curva ROC
@@ -199,12 +247,36 @@ train.music_genre <- music_genre_pred$music_genre[train]
 ```{r}
 set.seed(123)
 knn.1 <- knn(train.var, held.out.var, train.music_genre, k = 250)
-(tt <- table(held.out.music_genre, knn.1))
+(tabla.knn <- table(held.out.music_genre, knn.1))
 aciertos <- 0
 for (i in 1:9){
-  aciertos <- aciertos + tt[i,i]
+  aciertos <- aciertos + tabla.knn[i,i]
 }
-aciertos / sum(tt)
+aciertos / sum(tabla.knn)
+```
+
+#### Mapa de Calor Predicciones
+
+```{r}
+tabla.knn2 <- table(held.out.music_genre,knn.1)
+for (i in 1:nrow(tabla.knn)){
+  for (j in 1:nrow(tabla.knn)){
+    tabla.knn2[i,j] <- tabla.knn[i,j] / sum(tabla.knn[i,])
+  }
+}
+orden <- c("Rock","Rap","Jazz","Hip-Hop","Electronic","Country","Classical","Blues","Anime","Alternative")
+dataknn2 <- as.data.frame(tabla.knn2)
+dataknn2 %>% ggplot(aes(x = knn.1, y = held.out.music_genre, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(x = knn.1, y = held.out.music_genre, label = round(Freq,2))) +
+  scale_fill_gradient(low = "white", high = "red") +
+  scale_y_discrete(limits = orden) +
+  labs(title = "KNN",
+       x = "Predicciones",
+       y = "Valores reales",
+       fill = "Porcentaje") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 20))
 ```
 
 ## Regresión multinomial
@@ -239,19 +311,24 @@ p.1 <- predict(m.1,held.out)
 (tabla.p <- table(held.out.music_genre,p.1))
 
 mean(p.1 == held.out.music_genre)
+```
 
+#### Mapa de Calor Predicciones
+
+```{r}
 tabla.p2 <- table(held.out.music_genre,p.1)
 for (i in 1:nrow(tabla.p)){
   for (j in 1:nrow(tabla.p)){
     tabla.p2[i,j] <- tabla.p[i,j] / sum(tabla.p[i,])
   }
 }
-tabla.p2
+
 datap2 <- as.data.frame(tabla.p2)
 datap2 %>% ggplot(aes(x = p.1, y = held.out.music_genre, fill = Freq)) +
   geom_tile(color = "white") +
   geom_text(aes(x = p.1, y = held.out.music_genre, label = round(Freq,2))) +
   scale_fill_gradient(low = "white", high = "red") +
+  scale_y_discrete(limits = orden) +
   labs(title = "Multinomial",
        x = "Predicciones",
        y = "Valores reales",
