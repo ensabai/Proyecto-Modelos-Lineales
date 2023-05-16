@@ -214,14 +214,14 @@ aciertos / sum(tt)
 ```{r}
 test <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train)
 
-summary(test)
-
-z <- summary(test)$coefficients/summary(test)$standard.errors
-# Test de Wald para los coeficientes
-p <- (1 - pnorm(abs(z), 0, 1)) * 2
-p # los p-values para cada coeficiente
-
-step(test, trace=0)
+# summary(test)
+# 
+# z <- summary(test)$coefficients/summary(test)$standard.errors
+# # Test de Wald para los coeficientes
+# p <- (1 - pnorm(abs(z), 0, 1)) * 2
+# p # los p-values para cada coeficiente
+# 
+# step(test, trace=0)
 ```
 
 ### Entrenamiento
@@ -236,9 +236,28 @@ m.1
 ```{r}
 p.1 <- predict(m.1,held.out)
 
-table(held.out.music_genre,p.1)
+(tabla.p <- table(held.out.music_genre,p.1))
 
 mean(p.1 == held.out.music_genre)
+
+tabla.p2 <- table(held.out.music_genre,p.1)
+for (i in 1:nrow(tabla.p)){
+  for (j in 1:nrow(tabla.p)){
+    tabla.p2[i,j] <- tabla.p[i,j] / sum(tabla.p[i,])
+  }
+}
+tabla.p2
+datap2 <- as.data.frame(tabla.p2)
+datap2 %>% ggplot(aes(x = p.1, y = held.out.music_genre, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(x = p.1, y = held.out.music_genre, label = round(Freq,2))) +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(title = "Multinomial",
+       x = "Predicciones",
+       y = "Valores reales",
+       fill = "Porcentaje") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 20))
 ```
 
 #### Curva ROC
