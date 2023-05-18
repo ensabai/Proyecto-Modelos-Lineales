@@ -1,5 +1,5 @@
 ---
-title: "Proyecto"
+title: "Clasificación de canciones según su género en base a sus características"
 author: Carlos Gila Blanco y Enrique Sayas Bailach
 date: "`r Sys.Date()`"
 output:
@@ -17,22 +17,7 @@ output:
 params:
   lang: ES
 lang: r switch(params$lang, ES = 'es-ES', EN = 'en-US')
-subtitle: Tratamiento de Datos. Grado en Ciencia de Datos- UV
-language:
-  label:
-    fig: 'Figura '
-    tab: 'Tabla '
-    eq: 'Ecuación '
-    thm: 'Teorema '
-    lem: 'Lema '
-    def: 'Definición '
-    cor: 'Corolario '
-    prp: 'Proposición '
-    exm: 'Ejemplo '
-    exr: 'Ejercicio '
-    proof: 'Demostración. '
-    remark: 'Nota: '
-    solution: 'Solución. '
+subtitle: Escuela Técnica Superior de Tecnología (ETSE-UV), Ciencia de Datos
 ---
 
 ```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
@@ -58,7 +43,7 @@ knit_hooks$set(inline = function(x) {
 #knit_hooks$set(plot = knitr:::hook_plot_html)
 ```
 
-```{r echo = F, message = F}
+```{r echo = F, message = F, include = F}
 # Instalación automática de paquetes
 
 # Especificamos las librerías necesarias en esta lista
