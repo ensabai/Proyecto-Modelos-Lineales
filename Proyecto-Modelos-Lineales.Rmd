@@ -18,6 +18,9 @@ params:
   lang: ES
 lang: r switch(params$lang, ES = 'es-ES', EN = 'en-US')
 subtitle: Escuela Técnica Superior de Tecnología (ETSE-UV), Ciencia de Datos
+editor_options: 
+  markdown: 
+    wrap: sentence
 ---
 
 ```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
@@ -71,43 +74,78 @@ rm(list = ls())
 
 ```{r}
 music_genre <- read_csv("data/music_genre.csv")
+#Se muestra un resumen inicial del banco de datos cargado
 summary(music_genre)
 ```
 
-## Sobre las columnas
+## Información sobre las variables
 
 El dataset contiene 18 columnas:
-instance_id: Id del registro
-artist_name: Nombre del artista
-track_name: Nombre de la canción
-popularity: Nivel de popularidad
-acousticness: Nivel de confianza de que la canción sea acústica
-danceability: Indica que tan bailable es una canción basándose en diferentes elementos musicales como tempo, ritmo, beat, entre otros.
-duration_ms: El tiempo de duración de la canción en milisegundos.
-energy: Valores altos de energía representan canciones rápidas, activas y ruidosas, de lo contrario la energía es baja. Toma en cuenta aspectos como rango dinámico, timbre, volumen percibido, entre otros.
-instrumentalness: Predice si la canción no contiene vocales. Entre más instrumental sea la canción, más alto será el valor de este atributo. Canciones del género de rap tienen un bajo valor.
-key: Clasifica el pitch o las notas de la canción.
-liveness: Este valor indica la presencia de audiencia. Entre más audiencia detecta, más alto su valor y mayor probabilidad es de que la canción haya sido en vivo.
-loudness: La presencia de riudo en decibeles (dB), la amplitud de las ondas de la canción. Este valor es el promedio de la canción.
-mode: Indica la modalidad (mayor o menor) de una canción, el tipo de escala del que se deriva su contenido melódico. La mayor se representa con 1 y la menor con 0.
-speechiness: Detecta la presencia de palabras. Muy altos niveles indican audiolibros, podcasts, entre otros; altos niveles pueden ser canciones del género rap, valores bajos indican poco aporte de palabras en la canción.
-tempo: Los Beats Per Minute (BPM), la velocidad o el paso de una canción.
-obtained_date: Fecha en la que se ha añadido la canción al dataset
-valence: Describe la positividad de la canción. Valores altos indican mayor positividad (alegría, euforia, ánimos) y valores bajos indican más negatividad (tristeza, depresión, enojo).
-music_genre: El género correspondiente a la canción
+
+-   instance_id: Id del registro.
+
+-   artist_name: Nombre del artista.
+
+-   track_name: Nombre de la canción.
+
+-   popularity: Nivel de popularidad.
+
+-   acousticness: Nivel de confianza de que la canción sea acústica.
+
+-   danceability: Indica que tan bailable es una canción basándose en diferentes elementos musicales como tempo, ritmo, beat, entre otros.
+
+-   duration_ms: El tiempo de duración de la canción en milisegundos.
+
+-   energy: Valores altos de energía representan canciones rápidas, activas y ruidosas, de lo contrario la energía es baja.
+    Toma en cuenta aspectos como rango dinámico, timbre, volumen percibido, entre otros.
+
+-   instrumentalness: Predice si la canción no contiene vocales.
+    Entre más instrumental sea la canción, más alto será el valor de este atributo.
+    Canciones del género de rap tienen un bajo valor.
+
+-   key: Clasifica el pitch o las notas de la canción.
+
+-   liveness: Este valor indica la presencia de audiencia.
+    Entre más audiencia detecta, más alto su valor y mayor probabilidad es de que la canción haya sido en vivo.
+
+-   loudness: La presencia de riudo en decibeles (dB), la amplitud de las ondas de la canción.
+    Este valor es el promedio de la canción.
+    mode: Indica la modalidad (mayor o menor) de una canción, el tipo de escala del que se deriva su contenido melódico.
+    La mayor se representa con 1 y la menor con 0.
+
+-   speechiness: Detecta la presencia de palabras.
+    Muy altos niveles indican audiolibros, podcasts, entre otros; altos niveles pueden ser canciones del género rap, valores bajos indican poco aporte de palabras en la canción.
+
+-   tempo: Los Beats Per Minute (BPM), la velocidad o el paso de una canción.
+
+-   obtained_date: Fecha en la que se ha añadido la canción al dataset.
+
+-   valence: Describe la positividad de la canción.
+    Valores altos indican mayor positividad (alegría, euforia, ánimos) y valores bajos indican más negatividad (tristeza, depresión, enojo).
+
+-   music_genre: El género correspondiente a la canción
 
 ## Adecuación tipo de datos
 
 ```{r}
+#Se quitan las filas cuyo valor en popularity sea NA
 music_genre <- music_genre %>% filter(!is.na(popularity))
+#Se convierte a charater los identificadores de las canciones
 music_genre$instance_id <- as.character(music_genre$instance_id)
+#Se convierten a factor las variables key y mode
 music_genre$key <- as.factor(music_genre$key)
 music_genre$mode <- as.factor(music_genre$mode)
+#Se cambian los -1 por NA en la variable duration_ms 
 music_genre$duration_ms[music_genre$duration_ms == -1] = NA
+#Se cambian los ? por NA en la variable tempo 
 music_genre$tempo[music_genre$tempo == "?"] = NA
 music_genre$tempo <- as.numeric(music_genre$tempo)
+#El rango inicial de loudness era [-60 a 0]
+#Ahora será de [0 a 60]
 music_genre$loudness <- music_genre$loudness - min(music_genre$loudness, na.rm = TRUE)
+#Se convierte a factor la variable music_genre
 music_genre$music_genre <- as.factor(music_genre$music_genre)
+#Se muestra un resumen tras realizar los cambios
 summary(music_genre)
 ```
 
@@ -121,10 +159,11 @@ for (i in 1:ncol(music_genre)){
 }
 ```
 
-
 # Modelos de Predicción
 
 ## Creación de los subconjuntos de entrenamiento y test
+
+Se seleccionan las variables que aportan información sobre las características de la canción y que contengan pocos NAs
 
 ```{r}
 music_genre_pred <- music_genre %>% dplyr::select(-c(obtained_date,tempo,duration_ms,instance_id,track_name,artist_name))
@@ -133,17 +172,15 @@ music_genre_pred <- music_genre %>% dplyr::select(-c(obtained_date,tempo,duratio
 ### Correlación de las covariables
 
 ```{r}
+#Se cambian los nombres para que se muestren más claramente en el gráfico
 names_or <- names(music_genre_pred)
 names(music_genre_pred) <- c("popular.","acoustic.","dance.","energy","instru.","key","live.","loud.","mode","speech.","valence","music_genre")
-png("img/corr_cont.png")
 ggcorr(music_genre_pred,name = "Correlación", label = TRUE)
-dev.off()
 ```
 
 ### Distribución de las variables numéricas
 
 ```{r}
-png("img/vio_cont.png")
 music_genre_pred %>%
   mutate(`popular.` = `popular.` / 100,
          `loud.` = `loud.` / 60) %>% 
@@ -153,10 +190,9 @@ music_genre_pred %>%
   labs(x = "Covariables", y = "") +
   theme_minimal() +
   guides(fill = "none")
-dev.off()
 ```
 
-
+### Creación de los subconjuntos de entrenamiento y test
 
 ```{r}
 set.seed(123)
@@ -213,17 +249,6 @@ datalda2 %>% ggplot(aes(x = lda.class, y = held.out.music_genre, fill = Freq)) +
   theme(axis.text.x = element_text(angle = 20))
 ```
 
-#### Curva ROC
-
-```{r}
-predictions <- predict(lda.1,newdata = held.out, type = "prob")[["posterior"]]
-roc.multi <- multiclass.roc(held.out.music_genre, predictions)
-auc(roc.multi)
-rs <- roc.multi[["rocs"]]
-plot.roc(rs[[1]][[1]])
-sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
-```
-
 ## Análisis discriminante cuadrático (QDA)
 
 ### Entrenamiento
@@ -269,22 +294,14 @@ dataqda2 %>% ggplot(aes(x = qda.class, y = held.out.music_genre, fill = Freq)) +
   theme(axis.text.x = element_text(angle = 20))
 ```
 
-#### Curva ROC
-
-```{r}
-predictions <- predict(qda.1,newdata = held.out, type = "prob")[["posterior"]]
-roc.multi <- multiclass.roc(held.out.music_genre, predictions)
-auc(roc.multi)
-rs <- roc.multi[["rocs"]]
-plot.roc(rs[[1]][[1]])
-sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
-```
-
 ## K vecinos más cercanos (KNN)
 
 ### Subconjuntos de Entrenamiento y Test
 
+####Adecuación de los datos
+
 ```{r}
+#Los predictores deben estar a la misma escala para el correcto cálculo de las distancias
 music_genre_pred_knn <- music_genre_pred %>% dplyr::select(-c(key,mode))
 music_genre_pred_knn$popularity <- scale(music_genre_pred_knn$popularity)
 music_genre_pred_knn$acousticness <- scale(music_genre_pred_knn$acousticness)
@@ -295,12 +312,20 @@ music_genre_pred_knn$liveness <- scale(music_genre_pred_knn$liveness)
 music_genre_pred_knn$loudness <- scale(music_genre_pred_knn$loudness)
 music_genre_pred_knn$speechiness <- scale(music_genre_pred_knn$speechiness)
 music_genre_pred_knn$valence <- scale(music_genre_pred_knn$valence)
+```
+
+#### Subconjuntos de Entrenamiento y Test
+
+```{r}
 train.var <- cbind(music_genre_pred_knn[1:9])[train,]
 held.out.var <- cbind(music_genre_pred_knn[1:9])[!train,]
 train.music_genre <- music_genre_pred_knn$music_genre[train]
 ```
 
+### Evolución del Porcentaje de Acierto según el número de vecinos
+
 ```{r}
+# El siguiente código tarda mucho en ejecutarse, en consecuencia, el número de aciertos según el valor de K ha sido almacenado en data/aciertosKNN.RData
 # set.seed(123)
 # k <- seq(1,499,10)
 # aciertos_global <- data.frame("k" = NA, "aciertos" = NA, "aciertos_por" = NA)
@@ -318,8 +343,6 @@ train.music_genre <- music_genre_pred_knn$music_genre[train]
 # save(aciertos_global,file = "data/aciertosKNN.RData")
 ```
 
-### Evolución del Porcentaje de Acierto según el número de vecinos
-
 ```{r}
 load("data/aciertosKNN.RData")
 aciertos_global %>% ggplot(aes(x = k, y = aciertos_por)) +
@@ -330,12 +353,16 @@ aciertos_global %>% ggplot(aes(x = k, y = aciertos_por)) +
 aciertos_global[which.max(aciertos_global$aciertos_por),]
 ```
 
+### Predicción
+
+```{r}
+knn.1 <- knn(train.var, held.out.var, train.music_genre, k = aciertos_global[which.max(aciertos_global$aciertos_por),]$k)
+knn.1
+```
 
 #### Mapa de Calor Predicciones
 
 ```{r}
-knn.1 <- knn(train.var, held.out.var, train.music_genre, k = aciertos_global[which.max(aciertos_global$aciertos_por),]$k)
-
 (tabla.knn <- table(held.out.music_genre, knn.1))
 aciertos <- 0
 for (i in 1:nrow(tabla.knn)){
@@ -371,20 +398,21 @@ dataknn2 %>% ggplot(aes(x = knn.1, y = held.out.music_genre, fill = Freq)) +
 ```{r}
 test <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence + key + mode, data = music_genre_pred, subset = train)
 
-# summary(test)
-# 
-# z <- summary(test)$coefficients/summary(test)$standard.errors
-# # Test de Wald para los coeficientes
-# p <- (1 - pnorm(abs(z), 0, 1)) * 2
-# p # los p-values para cada coeficiente
-# 
-# step(test, trace=0)
+summary(test)
+
+z <- summary(test)$coefficients/summary(test)$standard.errors
+# Test de Wald para los coeficientes
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+p # los p-values para cada coeficiente
+
+step(test, trace=0)$call$formula
 ```
 
-### Entrenamiento
+#### Modelo Final
 
 ```{r}
-m.1 <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence + key + mode, data = music_genre_pred, subset = train)
+# Se utilizará la covariable `key`, a pesar de que la función step lo desaconseje, pues se obtiene un mayor porcentaje de aciertos
+m.1 <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence + mode + key, data = music_genre_pred, subset = train)
 m.1
 ```
 
@@ -421,61 +449,3 @@ datap2 %>% ggplot(aes(x = p.1, y = held.out.music_genre, fill = Freq)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 20))
 ```
-
-#### Curva ROC
-
-```{r}
-predictions <- predict(m.1,newdata = held.out, type = "prob")
-roc.multi <- multiclass.roc(held.out.music_genre, predictions)
-auc(roc.multi)
-rs <- roc.multi[["rocs"]]
-plot.roc(rs[[1]][[1]])
-sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
-```
-
-## Ejemplo gráfico
-
-```{r}
-music_genre_prop <- music_genre %>% dplyr::select(-c(key,mode,obtained_date))
-music_genre_prop <- music_genre_prop %>% dplyr::mutate(popularity_por = popularity / 100,
-                        duration_por = duration_ms / max(duration_ms, na.rm = TRUE),
-                        tempo_por = tempo / max(tempo, na.rm = TRUE),
-                        loudness_por = loudness / max(loudness, na.rm = TRUE)
-                        )
-
-music_genre_prop %>% dplyr::filter(instance_id %in% c(49721, 66116, 20548)) %>% 
-  pivot_longer(-c(instance_id,artist_name,track_name,popularity,duration_ms,music_genre,tempo,loudness),names_to = "categorias", values_to = "valores") %>% 
-  ggplot(aes(x = categorias, y = valores, group = instance_id, fill = instance_id)) +
-  geom_col(color = "black") + coord_polar() + theme_minimal() +
-  theme(axis.title = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank())
-```
-
-```{r}
-music_per_genre_prop <- music_genre_prop %>% group_by(music_genre) %>% 
-  summarise(acousticness  = mean(acousticness), danceability = mean(danceability), energy = mean(energy), instrumentalness = mean(instrumentalness), liveness = mean(liveness), speechiness = mean(speechiness), valence = mean(valence), popularity = mean(popularity_por), duration = mean(duration_por, na.rm = TRUE), tempo = mean(tempo_por, na.rm = TRUE), loudness = mean(loudness_por))
-
-generos <- c("Alternative","Anime","Blues","Classical","Country","Electronic","Hip-Hop","Jazz","Rap","Rock")
-
-valores <- c("#006633", "#FFC0CB", "#000080", "#000000", "#D2B48C", "#00FFFF", "#FF0000", "#ADD8E6", "#808080", "#8B0000")
-
-music_per_genre_prop %>% dplyr::filter(music_genre %in% c("Anime","Rock","Blues")) %>% 
-  pivot_longer(-c(music_genre),names_to = "categorias", values_to = "valores") %>% 
-  ggplot(aes(x = categorias, y = valores, group = music_genre, fill = music_genre)) +
-  geom_col(color = "black") + 
-  coord_polar() + 
-  theme_minimal() +
-  theme(axis.title = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank()) +
-  scale_fill_manual(
-    values = valores,
-    breaks = generos
-  ) + facet_wrap(vars(music_genre))
-```
-
-
-
-
-
