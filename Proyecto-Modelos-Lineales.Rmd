@@ -74,6 +74,28 @@ music_genre <- read_csv("data/music_genre.csv")
 summary(music_genre)
 ```
 
+## Sobre las columnas
+
+El dataset contiene 18 columnas:
+instance_id: Id del registro
+artist_name: Nombre del artista
+track_name: Nombre de la canción
+popularity: Nivel de popularidad
+acousticness: Nivel de confianza de que la canción sea acústica
+danceability: Indica que tan bailable es una canción basándose en diferentes elementos musicales como tempo, ritmo, beat, entre otros.
+duration_ms: El tiempo de duración de la canción en milisegundos.
+energy: Valores altos de energía representan canciones rápidas, activas y ruidosas, de lo contrario la energía es baja. Toma en cuenta aspectos como rango dinámico, timbre, volumen percibido, entre otros.
+instrumentalness: Predice si la canción no contiene vocales. Entre más instrumental sea la canción, más alto será el valor de este atributo. Canciones del género de rap tienen un bajo valor.
+key: Clasifica el pitch o las notas de la canción.
+liveness: Este valor indica la presencia de audiencia. Entre más audiencia detecta, más alto su valor y mayor probabilidad es de que la canción haya sido en vivo.
+loudness: La presencia de riudo en decibeles (dB), la amplitud de las ondas de la canción. Este valor es el promedio de la canción.
+mode: Indica la modalidad (mayor o menor) de una canción, el tipo de escala del que se deriva su contenido melódico. La mayor se representa con 1 y la menor con 0.
+speechiness: Detecta la presencia de palabras. Muy altos niveles indican audiolibros, podcasts, entre otros; altos niveles pueden ser canciones del género rap, valores bajos indican poco aporte de palabras en la canción.
+tempo: Los Beats Per Minute (BPM), la velocidad o el paso de una canción.
+obtained_date: Fecha en la que se ha añadido la canción al dataset
+valence: Describe la positividad de la canción. Valores altos indican mayor positividad (alegría, euforia, ánimos) y valores bajos indican más negatividad (tristeza, depresión, enojo).
+music_genre: El género correspondiente a la canción
+
 ## Adecuación tipo de datos
 
 ```{r}
@@ -87,16 +109,32 @@ music_genre$tempo <- as.numeric(music_genre$tempo)
 music_genre$loudness <- music_genre$loudness - min(music_genre$loudness, na.rm = TRUE)
 music_genre$music_genre <- as.factor(music_genre$music_genre)
 summary(music_genre)
-table(music_genre$music_genre)
 ```
+
+### Tabla de NAs
+
+```{r}
+NAs <- data.frame(col = character(), NAs = integer())
+for (i in 1:ncol(music_genre)){
+  temp_NA <- sum(is.na(music_genre[i]))
+  NAs <- rbind(NAs,c(names(music_genre)[i], temp_NA))
+}
+```
+
 
 # Modelos de Predicción
 
 ## Creación de los subconjuntos de entrenamiento y test
 
 ```{r}
-music_genre_pred <- music_genre %>% dplyr::select(-c(key,mode,obtained_date,tempo,duration_ms,instance_id,track_name,artist_name))
+music_genre_pred <- music_genre %>% dplyr::select(-c(obtained_date,tempo,duration_ms,instance_id,track_name,artist_name))
 ```
+
+### Distribución de las covariables
+
+```{r}
+```
+
 
 ```{r}
 set.seed(123)
@@ -113,7 +151,7 @@ held.out.music_genre <- music_genre_pred$music_genre[!train]
 ### Entrenamiento
 
 ```{r}
-lda.1 <- lda(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train) 
+lda.1 <- lda(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence + key + mode, data = music_genre_pred, subset = train) 
 lda.1
 ```
 
@@ -168,7 +206,7 @@ sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
 ### Entrenamiento
 
 ```{r}
-qda.1 <- qda(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train)
+qda.1 <- qda(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence + key + mode, data = music_genre_pred, subset = train)
 qda.1
 ```
 
@@ -224,9 +262,10 @@ sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
 ### Subconjuntos de Entrenamiento y Test
 
 ```{r}
-train.var <- cbind(music_genre_pred[1:9])[train,]
-held.out.var <- cbind(music_genre_pred[1:9])[!train,]
-train.music_genre <- music_genre_pred$music_genre[train]
+music_genre_pred_knn <- music_genre_pred %>% dplyr::select(-c(key,mode))
+train.var <- cbind(music_genre_pred_knn[1:9])[train,]
+held.out.var <- cbind(music_genre_pred_knn[1:9])[!train,]
+train.music_genre <- music_genre_pred_knn$music_genre[train]
 ```
 
 ```{r}
@@ -287,7 +326,7 @@ dataknn2 %>% ggplot(aes(x = knn.1, y = held.out.music_genre, fill = Freq)) +
 ### Entrenamiento
 
 ```{r}
-test <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train)
+test <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence + key + mode, data = music_genre_pred, subset = train)
 
 # summary(test)
 # 
@@ -302,7 +341,7 @@ test <- multinom(music_genre ~ popularity + acousticness + danceability + energy
 ### Entrenamiento
 
 ```{r}
-m.1 <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence, data = music_genre_pred, subset = train)
+m.1 <- multinom(music_genre ~ popularity + acousticness + danceability + energy + instrumentalness + liveness + loudness + speechiness + valence + key + mode, data = music_genre_pred, subset = train)
 m.1
 ```
 
