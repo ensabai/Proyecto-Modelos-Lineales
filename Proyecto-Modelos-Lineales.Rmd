@@ -245,7 +245,7 @@ train.music_genre <- music_genre_pred$music_genre[train]
 ```
 
 ```{r}
-set.seed(123)
+#set.seed(123)
 # k <- seq(1,499,10)
 # aciertos_global <- data.frame("k" = NA, "aciertos" = NA, "aciertos_por" = NA)
 # for (j in k){
