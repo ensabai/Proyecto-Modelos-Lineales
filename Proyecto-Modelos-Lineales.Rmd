@@ -322,7 +322,7 @@ train.music_genre <- music_genre_pred_knn$music_genre[train]
 
 ```{r}
 load("data/aciertosKNN.RData")
-plot(x = aciertos_global$k, y = aciertos_global$aciertos_por)
+plot(x = aciertos_global$k, y = aciertos_global$aciertos_por, col = ifelse(aciertos_global$k == 51, "red", "black"))
 aciertos_global[which.max(aciertos_global$aciertos_por),]
 ```
 
