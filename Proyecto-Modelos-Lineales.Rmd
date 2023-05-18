@@ -169,7 +169,7 @@ held.out <- music_genre_pred[!train, ]
 held.out.music_genre <- music_genre_pred$music_genre[!train]
 ```
 
-## Análisis Lineal Discriminante (LDA)
+## Análisis Discriminante Lineal (LDA)
 
 ### Entrenamiento
 
@@ -327,6 +327,7 @@ aciertos_global %>% ggplot(aes(x = k, y = aciertos_por)) +
   theme_minimal() +
   labs(x = "K Vecinos Cercanos", y = "Porcentaje de Acierto")
 
+aciertos_global[which.max(aciertos_global$aciertos_por),]
 ```
 
 
