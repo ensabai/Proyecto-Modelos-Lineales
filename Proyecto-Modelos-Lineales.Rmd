@@ -246,18 +246,36 @@ train.music_genre <- music_genre_pred$music_genre[train]
 
 ```{r}
 set.seed(123)
-knn.1 <- knn(train.var, held.out.var, train.music_genre, k = 250)
-(tabla.knn <- table(held.out.music_genre, knn.1))
-aciertos <- 0
-for (i in 1:9){
-  aciertos <- aciertos + tabla.knn[i,i]
-}
-aciertos / sum(tabla.knn)
+# k <- seq(1,499,10)
+# aciertos_global <- data.frame("k" = NA, "aciertos" = NA, "aciertos_por" = NA)
+# for (j in k){
+#   knn.1 <- knn(train.var, held.out.var, train.music_genre, k = j)
+#   (tabla.knn <- table(held.out.music_genre, knn.1))
+#   aciertos <- 0
+#   for (i in 1:nrow(tabla.knn)){
+#     aciertos <- aciertos + tabla.knn[i,i]
+#     }
+#   aciertos_por <- aciertos / sum(tabla.knn)
+#   aciertos_global <- rbind(aciertos_global,c(j,aciertos,aciertos_por))
+# }
+#aciertos_global <- aciertos_global[2:nrow(aciertos_global),]
+#save(aciertos_global,file = "data/aciertosKNN.RData")
 ```
+
+### Evolución del Porcentaje de Acierto según el número de vecinos
+
+```{r}
+load("data/aciertosKNN.RData")
+plot(x = aciertos_global$k, y = aciertos_global$aciertos_por)
+aciertos_global[which.max(aciertos_global$aciertos_por),]
+```
+
 
 #### Mapa de Calor Predicciones
 
 ```{r}
+knn.1 <- knn(train.var, held.out.var, train.music_genre, k = 21)
+(tabla.knn <- table(held.out.music_genre, knn.1))
 tabla.knn2 <- table(held.out.music_genre,knn.1)
 for (i in 1:nrow(tabla.knn)){
   for (j in 1:nrow(tabla.knn)){
