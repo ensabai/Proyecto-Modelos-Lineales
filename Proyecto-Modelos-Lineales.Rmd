@@ -322,15 +322,19 @@ train.music_genre <- music_genre_pred_knn$music_genre[train]
 
 ```{r}
 load("data/aciertosKNN.RData")
-plot(x = aciertos_global$k, y = aciertos_global$aciertos_por, col = ifelse(aciertos_global$k == 51, "red", "black"))
-aciertos_global[which.max(aciertos_global$aciertos_por),]
+aciertos_global %>% ggplot(aes(x = k, y = aciertos_por)) +
+  geom_point(col = ifelse(aciertos_global$k == aciertos_global[which.max(aciertos_global$aciertos_por),]$k, "red", "black")) +
+  theme_minimal() +
+  labs(x = "K Vecinos Cercanos", y = "Porcentaje de Acierto")
+
 ```
 
 
 #### Mapa de Calor Predicciones
 
 ```{r}
-knn.1 <- knn(train.var, held.out.var, train.music_genre, k = 51)
+knn.1 <- knn(train.var, held.out.var, train.music_genre, k = aciertos_global[which.max(aciertos_global$aciertos_por),]$k)
+
 (tabla.knn <- table(held.out.music_genre, knn.1))
 aciertos <- 0
 for (i in 1:nrow(tabla.knn)){
