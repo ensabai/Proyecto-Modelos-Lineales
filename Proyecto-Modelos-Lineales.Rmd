@@ -130,14 +130,37 @@ for (i in 1:ncol(music_genre)){
 music_genre_pred <- music_genre %>% dplyr::select(-c(obtained_date,tempo,duration_ms,instance_id,track_name,artist_name))
 ```
 
-### Distribución de las covariables
+### Correlación de las covariables
 
 ```{r}
+names_or <- names(music_genre_pred)
+names(music_genre_pred) <- c("popular.","acoustic.","dance.","energy","instru.","key","live.","loud.","mode","speech.","valence","music_genre")
+png("img/corr_cont.png")
+ggcorr(music_genre_pred,name = "Correlación", label = TRUE)
+dev.off()
 ```
+
+### Distribución de las variables numéricas
+
+```{r}
+png("img/vio_cont.png")
+music_genre_pred %>%
+  mutate(`popular.` = `popular.` / 100,
+         `loud.` = `loud.` / 60) %>% 
+  pivot_longer(-c(key,mode,music_genre), names_to = "Co", values_to = "Valor") %>% 
+  ggplot(aes(x = Co, y = Valor)) +
+  geom_violin(aes(fill = Co)) +
+  labs(x = "Covariables", y = "") +
+  theme_minimal() +
+  guides(fill = "none")
+dev.off()
+```
+
 
 
 ```{r}
 set.seed(123)
+names(music_genre_pred) <- names_or
 n <- nrow(music_genre_pred)
 train <- rep(TRUE,n)
 train[sample(n,n*0.2)] <- FALSE
@@ -263,13 +286,22 @@ sapply(2:length(rs),function(i) lines.roc(rs[[i]][[1]],col=i))
 
 ```{r}
 music_genre_pred_knn <- music_genre_pred %>% dplyr::select(-c(key,mode))
+music_genre_pred_knn$popularity <- scale(music_genre_pred_knn$popularity)
+music_genre_pred_knn$acousticness <- scale(music_genre_pred_knn$acousticness)
+music_genre_pred_knn$danceability <- scale(music_genre_pred_knn$danceability)
+music_genre_pred_knn$energy <- scale(music_genre_pred_knn$energy)
+music_genre_pred_knn$instrumentalness <- scale(music_genre_pred_knn$instrumentalness)
+music_genre_pred_knn$liveness <- scale(music_genre_pred_knn$liveness)
+music_genre_pred_knn$loudness <- scale(music_genre_pred_knn$loudness)
+music_genre_pred_knn$speechiness <- scale(music_genre_pred_knn$speechiness)
+music_genre_pred_knn$valence <- scale(music_genre_pred_knn$valence)
 train.var <- cbind(music_genre_pred_knn[1:9])[train,]
 held.out.var <- cbind(music_genre_pred_knn[1:9])[!train,]
 train.music_genre <- music_genre_pred_knn$music_genre[train]
 ```
 
 ```{r}
-#set.seed(123)
+# set.seed(123)
 # k <- seq(1,499,10)
 # aciertos_global <- data.frame("k" = NA, "aciertos" = NA, "aciertos_por" = NA)
 # for (j in k){
@@ -282,8 +314,8 @@ train.music_genre <- music_genre_pred_knn$music_genre[train]
 #   aciertos_por <- aciertos / sum(tabla.knn)
 #   aciertos_global <- rbind(aciertos_global,c(j,aciertos,aciertos_por))
 # }
-#aciertos_global <- aciertos_global[2:nrow(aciertos_global),]
-#save(aciertos_global,file = "data/aciertosKNN.RData")
+# aciertos_global <- aciertos_global[2:nrow(aciertos_global),]
+# save(aciertos_global,file = "data/aciertosKNN.RData")
 ```
 
 ### Evolución del Porcentaje de Acierto según el número de vecinos
@@ -298,8 +330,14 @@ aciertos_global[which.max(aciertos_global$aciertos_por),]
 #### Mapa de Calor Predicciones
 
 ```{r}
-knn.1 <- knn(train.var, held.out.var, train.music_genre, k = 21)
+knn.1 <- knn(train.var, held.out.var, train.music_genre, k = 51)
 (tabla.knn <- table(held.out.music_genre, knn.1))
+aciertos <- 0
+for (i in 1:nrow(tabla.knn)){
+  aciertos <- aciertos + tabla.knn[i,i]
+  }
+aciertos_por <- aciertos / sum(tabla.knn)
+
 tabla.knn2 <- table(held.out.music_genre,knn.1)
 for (i in 1:nrow(tabla.knn)){
   for (j in 1:nrow(tabla.knn)){
